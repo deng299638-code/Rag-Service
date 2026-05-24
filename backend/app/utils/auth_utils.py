@@ -58,26 +58,19 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depend
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 检查JWT是否在黑名单中
+    # 检查JWT是否在黑名单中（Redis不可用时跳过黑名单检查）
     jti = payload.get("jti")
-    logger.info(f"【debug】 检查JWT是否在黑名单中，jti: {jti}", extra={"path": "auth_utils.get_current_user_id"})
     if jti:
         redis_client = await connect_redis()
-        # 使用通配符查询所有可能的黑名单键格式
-        # 匹配任何前缀的blacklist键，如:1:blacklist:{jti}、blacklist:{jti}等
-        wildcard_pattern = f"*blacklist:{jti}"
-        
-        # 获取所有匹配的键
-        matching_keys = await redis_client.keys(wildcard_pattern)
-        logger.info(f"【debug】 检查JWT是否在黑名单中，匹配的键: {matching_keys}", extra={"path": "auth_utils.get_current_user_id"})
-        
-        # 如果有匹配的键，说明JWT在黑名单中
-        if matching_keys:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has been revoked",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        if redis_client is not None:
+            wildcard_pattern = f"*blacklist:{jti}"
+            matching_keys = await redis_client.keys(wildcard_pattern)
+            if matching_keys:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been revoked",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
 
     # 从Django JWT中提取user_id（uuid）
     user_id: str = payload.get("user_id")
@@ -137,8 +130,11 @@ async def get_user_info_from_redis(user_id: str, credentials: HTTPAuthorizationC
         用户信息
     """
     redis_client = await connect_redis()
+    if redis_client is None:
+        return await fetch_user_info_from_django_api(credentials.credentials, os.getenv("DJANGO_API_URL") + "/user/detail/")
+
     key = f":1:user:{user_id}"
-    
+
     try:
         # 从Redis中获取用户信息
         user_info = await redis_client.get(key)

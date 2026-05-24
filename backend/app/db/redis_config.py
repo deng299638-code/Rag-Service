@@ -11,15 +11,23 @@ REDIS_DB = 3
 redis_client = None
 
 async def connect_redis():
-    """连接Redis"""
+    """连接Redis（Redis不可用时返回 None，避免阻塞服务启动）"""
     global redis_client
     if redis_client is None:
-        redis_client = redis.Redis(
-            host=REDIS_HOST, # redis主机地址
-            port=REDIS_PORT, # redis端口号
-            db=REDIS_DB,     # redis数据库编号(0-15)
-            decode_responses=True # 是否对返回值进行解码(True:返回字符串,False:返回字节)
-        )
+        try:
+            redis_client = redis.Redis(
+                host=REDIS_HOST,
+                port=REDIS_PORT,
+                db=REDIS_DB,
+                decode_responses=True,
+                socket_connect_timeout=2,   # 连接超时2秒，避免无限等待
+                socket_timeout=5,           # 读写超时5秒
+            )
+            await redis_client.ping()
+        except Exception as e:
+            print(f"Redis连接失败（服务未启动或网络不可达）: {e}，将跳过Redis相关功能")
+            redis_client = None
+            return None
     return redis_client
 
 async def close_redis():

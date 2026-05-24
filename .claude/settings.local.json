@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(.venv/Scripts/python.exe *)",
+      "Bash(mysql *)",
+      "Bash(.venv/Scripts/python -c \"from dotenv import load_dotenv; load_dotenv\\(\\); print\\('dotenv works'\\)\")",
+      "Bash(.venv/Scripts/python -c \"import sys; sys.path.insert\\(0, '.'\\); from main import app; print\\('Import OK'\\)\")",
+      "Bash(.venv/Scripts/python -c \"from app.agent.agent_middleware import get_middleware; print\\('OK'\\)\")",
+      "Bash(.venv/Scripts/uvicorn main:app --host 0.0.0.0 --port 8000)",
+      "Bash(kill %1)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(pkill -f \"uvicorn\")",
+      "Bash(.venv/Scripts/python -c \"import uvicorn; uvicorn.run\\('main:app', host='0.0.0.0', port=8000, log_level='info'\\)\")",
+      "Bash(.venv/Scripts/uvicorn main:app *)",
+      "Bash(mysqld --version)",
+      "Bash(redis-cli ping *)",
+      "Bash(redis-server --version)",
+      "Bash(mysqladmin -u root -p status)",
+      "Bash(netstat -ano)",
+      "Bash(mysql_config_editor print *)",
+      "Read(//d/mysql/mysql-9.6.0-winx64/data/mysql/**)",
+      "Bash(.venv/Scripts/python *)",
+      "Bash(curl -s http://localhost:8000/health/live)",
+      "Bash(/c/Users/邓凯天/Desktop/code/项目/git1/LangChain-RAG-FastAPI-Service/.venv/Scripts/python *)",
+      "Bash(../.venv/Scripts/uvicorn main:app --host 0.0.0.0 --port 8000)",
+      "Bash(curl -s http://localhost:8000/health/ready)"
+    ]
+  }
+}
